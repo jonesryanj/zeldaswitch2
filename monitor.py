@@ -62,6 +62,41 @@ OUT_OF_STOCK_PHRASES = [
 SCHEMA_IN_STOCK = ["instock", "presale", "preorder"]
 SCHEMA_OUT_OF_STOCK = ["outofstock", "discontinued", "soldout"]
 
+# Markers that indicate "everything after this point is a recommendation
+# carousel, not the actual product we're tracking." Retail pages are full of
+# "Add to cart" buttons for unrelated items in these sections, which caused
+# false positives (e.g. Target). We cut the text here before searching for
+# in-stock phrases, so only the real product's buy box counts.
+RECOMMENDATION_SECTION_MARKERS = [
+    "additional product information and recommendations",
+    "discover more options",
+    "consider these accessories",
+    "guests also viewed",
+    "customers also viewed",
+    "customers also bought",
+    "you may also like",
+    "similar items",
+    "frequently bought together",
+    "recommended for you",
+    "related products",
+    "sponsored products",
+]
+
+
+def get_primary_text(visible_text):
+    """
+    Returns the portion of the page text before any recommendation/
+    carousel section begins, so in-stock keyword checks don't pick up
+    unrelated "Add to cart" buttons from other products on the page.
+    """
+    lower = visible_text.lower()
+    cutoff = len(visible_text)
+    for marker in RECOMMENDATION_SECTION_MARKERS:
+        idx = lower.find(marker)
+        if idx != -1:
+            cutoff = min(cutoff, idx)
+    return visible_text[:cutoff]
+
 
 def log(msg):
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
@@ -127,13 +162,21 @@ def check_availability(name, url):
             return "in_stock"
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    visible_text = soup.get_text(separator=" ").lower()
+    full_visible_text = soup.get_text(separator=" ")
+    visible_text = full_visible_text.lower()
 
+    # "Out of stock" phrasing legitimately only ever refers to the actual
+    # product on the page, so it's safe to search the full text for this.
     for phrase in OUT_OF_STOCK_PHRASES:
         if phrase in visible_text:
             return "out_of_stock"
+
+    # "Add to cart" etc. is searched ONLY in the primary product area,
+    # to avoid false positives from unrelated recommended-product
+    # carousels further down the page (see RECOMMENDATION_SECTION_MARKERS).
+    primary_text = get_primary_text(full_visible_text).lower()
     for phrase in IN_STOCK_PHRASES:
-        if phrase in visible_text:
+        if phrase in primary_text:
             return "in_stock"
 
     return "unknown"

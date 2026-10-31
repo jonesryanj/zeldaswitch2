@@ -3,6 +3,6 @@
   "Best Buy": "unknown",
   "Target": "in_stock",
   "GameStop": "unknown",
-  "Walmart": "unknown",
+  "Walmart": "out_of_stock",
   "Amazon": "unknown"
 }

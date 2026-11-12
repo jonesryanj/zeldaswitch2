@@ -4,5 +4,5 @@
   "Target": "in_stock",
   "GameStop": "unknown",
   "Walmart": "unknown",
-  "Amazon": "unknown"
+  "Amazon": "out_of_stock"
 }

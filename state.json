@@ -1,8 +1,8 @@
 {
-  "Nintendo Store": "out_of_stock",
+  "Nintendo Store": "in_stock",
   "Best Buy": "unknown",
   "Target": "in_stock",
   "GameStop": "unknown",
   "Walmart": "unknown",
-  "Amazon": "out_of_stock"
+  "Amazon": "unknown"
 }
